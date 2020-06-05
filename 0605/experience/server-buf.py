@@ -21,6 +21,7 @@ while True:
 
     try:
         sock_c.sendall(msg.encode('utf-8'))
+        sock_c.sendall(msg.encode('utf-8'))
     except:
         print('sendall function failed.')
 
