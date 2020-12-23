@@ -20,6 +20,9 @@ class Server:
         self.sock.bind((address, port))
         self.sock.listen()
 
+    def __del__ (self):
+        self.sock.close()
+
     def run (self) -> None:
         while True:
             sock_c, addr = self.sock.accept()
