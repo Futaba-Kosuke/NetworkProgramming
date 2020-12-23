@@ -1,6 +1,6 @@
 import socket
 import argparse
-from dataclasses import dataclass, InitVar, field
+from dataclasses import dataclass, InitVar
 import json
 import threading
 
@@ -13,7 +13,7 @@ class Server:
     address: InitVar[str]
     port: InitVar[int]
 
-    sock: socket.socket = field(default=None)
+    sock: socket.socket
     
     def __post_init__ (self, address, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,7 +34,7 @@ class Server:
 
         log_dict['log'].append(post_dict)
 
-        sock_c.sendall(json.dumps(log_dict).encode('utf-8'))
+        sock_c.send(json.dumps(log_dict).encode('utf-8'))
         
         with open('log.json', 'w') as f:
             json.dump(log_dict, f, indent=4)
