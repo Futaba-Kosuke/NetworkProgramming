@@ -74,10 +74,11 @@ class Server:
 
             with open('log/log.json', 'r') as f:
                 log_dict = json.load(f)
-            log_dict['log'] = [Message(json.dumps(log)) for log in log_dict['log']]
+            # log_dict['log'] = [Message(json.dumps(log)) for log in log_dict['log']]
+            log_dict['log'] = [Message(json.dumps(log)).to_dict(is_have_secret=True) for log in log_dict['log']]
 
             target_idx = [i for i, message in enumerate(log_dict['log'])
-                                if message.unique_id == target_id and message.password == sha256_add(password, message.date)
+                                if message['unique_id'] == target_id and message['password'] == sha256_add(password, message['date'])
                              ]
 
             print(log_dict)
@@ -85,7 +86,6 @@ class Server:
 
             with open('log/log.json', 'w') as f:
                 json.dump(log_dict, f, indent=4)
-
 
             return
 
