@@ -3,6 +3,7 @@ import argparse
 from dataclasses import dataclass, InitVar, field
 import json
 import threading
+import multiprocessing
 
 from utils.utils import sha256, sha256_add
 from utils.message import Message
@@ -34,7 +35,8 @@ class Server:
         print('start server')
         while True:
             sock_c, addr = self.sock.accept()
-            threading.Thread(target=self.bulletin_board, args=(sock_c, addr)).start()
+            # multiprocessing.Start(target=self.bulletin_board, args=(sock_c, addr)).start()
+            self.chat(sock_c, addr)
 
     def bulletin_board (self, sock_c: socket.socket, addr: str) -> None:
         mode = sock_c.recv(self.buf_size).decode('utf-8')
@@ -90,6 +92,51 @@ class Server:
             return
 
         sock_c.close()
+
+    def chat (self, sock_c: socket.socket, addr: str) -> None:
+        multiprocessing.Process(target=self.recv_process, args=(sock_c, addr)).start()
+        self.send_process(sock_c, addr)
+
+    def recv_process (self, sock_c: socket.socket, addr: str) -> None:
+        while True:
+            try:
+                message_json = sock_c.recv(BUFSIZE).decode('utf-8')
+                message = Message(message_json)
+                green_color = '\033[32m'
+                end_color = '\033[0m'
+                print(f'\n{green_color}{message.letter:>40}{end_color}')
+            except:
+                pass
+
+        return 
+
+    def send_process (self, sock_c: socket.socket, addr: str) -> None:
+        while True:
+            letter = input()
+
+            date = 'XXX'
+            unique_id = 'XXX'
+            user_name = 'SERVER'
+            title = 'XXX'
+            letter = letter
+            user_ip = 'XXX'
+            password = 'XXX'
+            
+            message = Message(
+                message_json=json.dumps({
+                    'unique_id': unique_id,
+                    'user_name': user_name,
+                    'date': date,
+                    'title': title,
+                    'letter': letter,
+                    'user_ip': user_ip,
+                    'password': password
+                })
+            )
+ 
+            sock_c.send(message.to_json(is_have_secret=False).encode('utf-8'))
+
+        return
 
 def main():
 
