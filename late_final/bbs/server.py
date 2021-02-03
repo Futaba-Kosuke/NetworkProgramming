@@ -31,18 +31,16 @@ class Server:
     def __del__ (self):
         self.sock.close()
 
-    def run (self, mode: str = 'bbs') -> None:
+    def run (self) -> None:
         print('start server')
         while True:
             sock_c, addr = self.sock.accept()
-            if mode == 'bbs':
-                multiprocessing.Process(target=self.bulletin_board, args=(sock_c, addr)).start()
-            elif mode == 'chat':
-                self.chat(sock_c, addr)
+            multiprocessing.Process(target=self.bulletin_board, args=(sock_c, addr)).start()
 
     def bulletin_board (self, sock_c: socket.socket, addr: str) -> None:
         req_json = sock_c.recv(self.buf_size).decode('utf-8')
-        req_dict = json.loads(req_dict)
+        print(req_json, type(req_json))
+        req_dict = json.loads(req_json)
         mode = req_dict['mode']
 
         # メッセージ投稿
@@ -73,8 +71,7 @@ class Server:
             return
 
         if mode == 'delete':
-            post_json = req_dict['json']
-            post_dict = json.loads(post_json)
+            post_dict = req_dict['json']
             target_id, password = post_dict['target_id'], post_dict['password']
 
             with open('log/log.json', 'r') as f:
@@ -95,48 +92,6 @@ class Server:
 
         sock_c.close()
 
-    def chat (self, sock_c: socket.socket, addr: str) -> None:
-        multiprocessing.Process(target=self.recv_process, args=(sock_c, addr)).start()
-        self.send_process(sock_c, addr)
-
-    def recv_process (self, sock_c: socket.socket, addr: str) -> None:
-        while True:
-            message_json = sock_c.recv(BUFSIZE).decode('utf-8')
-            message = Message(message_json)
-            green_color = '\033[32m'
-            end_color = '\033[0m'
-            print(f'\n{green_color}{message.letter:>40}{end_color}')
-
-        return 
-
-    def send_process (self, sock_c: socket.socket, addr: str) -> None:
-        while True:
-            letter = input()
-
-            date = 'XXX'
-            unique_id = 'XXX'
-            user_name = 'SERVER'
-            title = 'XXX'
-            letter = letter
-            user_ip = 'XXX'
-            password = 'XXX'
-            
-            message = Message(
-                message_json=json.dumps({
-                    'unique_id': unique_id,
-                    'user_name': user_name,
-                    'date': date,
-                    'title': title,
-                    'letter': letter,
-                    'user_ip': user_ip,
-                    'password': password
-                })
-            )
- 
-            sock_c.send(message.to_json(is_have_secret=False).encode('utf-8'))
-
-        return
-
 def main():
 
     parser = argparse.ArgumentParser()
@@ -148,7 +103,7 @@ def main():
     port = args.port
 
     server = Server(buf_size=BUFSIZE, address=address, port=port)
-    server.run(mode='chat')
+    server.run()
 
 if __name__ == '__main__':
     main()

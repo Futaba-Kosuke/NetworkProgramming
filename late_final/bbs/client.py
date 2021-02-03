@@ -36,12 +36,8 @@ class Client:
     def __del__ (self):
         self.sock.close()
 
-    def run (self, mode: str = 'bbs') -> None:
-        if mode == 'bbs':
-            self.bulletin_board()
-        elif mode == 'chat':
-            self.chat()
-
+    def run (self) -> None:
+        self.bulletin_board()
         return 
 
     def bulletin_board (self) -> None:
@@ -97,54 +93,6 @@ class Client:
 
             return
 
-    def chat (self) -> None:
-        self.connect()
-        recv_p = multiprocessing.Process(target=self.recv_process)
-        recv_p.start()
-        self.send_process(recv_p)
-
-    def send_process (self, recv_p: multiprocessing.Process) -> None:
-        while True:
-            letter = input()
-
-            if letter == 'bye':
-                print(f'OK, bye {user_name}')
-                recv_p.kill()
-                break
-
-            date = 'XXX'
-            unique_id = 'XXX'
-            user_name = 'CLIENT'
-            title = 'XXX'
-            letter = letter
-            user_ip = socket.gethostbyname(self.host)
-            password = 'XXX'
-            
-            message = Message(
-                message_json=json.dumps({
-                    'unique_id': unique_id,
-                    'user_name': user_name,
-                    'date': date,
-                    'title': title,
-                    'letter': letter,
-                    'user_ip': user_ip,
-                    'password': password
-                })
-            )
-            self.post(message)
-
-        return 
-
-    def recv_process (self) -> None:
-        while True:
-            message_json = self.sock.recv(BUFSIZE).decode('utf-8')
-            message = Message(message_json)
-            green_color = '\033[32m'
-            end_color = '\033[0m'
-            print(f'\n{green_color}{message.letter:>40}{end_color}')
-
-        return 
-
     def connect (self) -> None:
         self.sock.connect((self.host, self.port))
         is_connected = True
@@ -162,7 +110,7 @@ class Client:
     def post (self, message: Message) -> None:
         req = {
                 'mode': 'post',
-                'json': message.to_json(is_have_secret=True).encode('utf-8')
+                'json': message.to_dict(is_have_secret=True)
               }
         self.sock.send(json.dumps(req).encode('utf-8'))
 
@@ -185,7 +133,7 @@ def main():
     port = args.port
 
     client = Client(buf_size=BUFSIZE, host=host, port=port)
-    client.run(mode='chat')
+    client.run()
 
 if __name__ == '__main__':
     main()
